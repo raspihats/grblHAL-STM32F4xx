@@ -195,6 +195,8 @@
   #include "boards/btt_octopus_pro_map.h"
 #elif defined(BOARD_STM32F407VET6_DEV)
   #include "boards/stm32f407vet6_dev_board.h"
+#elif defined(BOARD_MC5S3DP_XHAT)
+  #include "boards/mc5s3dp_xhat_map.h"
 #elif defined(BOARD_MY_MACHINE)
   #include "boards/my_machine_map.h"
 #else // default board
