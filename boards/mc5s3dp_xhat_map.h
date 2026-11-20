@@ -4,6 +4,7 @@
   Board map for the MC5S3DP-XHAT 5-axis motion control board (STM32F411RCT6,
   25 MHz crystal). Pin assignments match the board's original grbl-Mega-5X port:
   https://github.com/raspihats/MC5S3DP-XHAT-GRBL-5X
+  Build and usage notes: MC5S3DP-XHAT.md in the repository root.
 
   Part of grblHAL
 

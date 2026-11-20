@@ -1,6 +1,7 @@
 # Makefile build for grblHAL STM32F4xx with arm-none-eabi-gcc (no PlatformIO / CubeIDE).
 #
 # Currently set up for the MC5S3DP-XHAT board (STM32F411RCT6, 25 MHz HSE, USART1).
+# See MC5S3DP-XHAT.md for the pin map, build options and flashing notes.
 #
 #   make                build build/<BOARD>/grblHAL.elf, .hex, .bin, .map
 #   make flash          program with OpenOCD (ST-Link)
