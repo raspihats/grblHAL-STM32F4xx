@@ -45,8 +45,10 @@ LDFLAGS = $(CPU) -T$(LDSCRIPT) -specs=nano.specs -specs=nosys.specs \
 LIBS    = -lm
 
 # grblHAL core, driver and plugins. Disabled plugins compile to nothing.
+# eeprom/ (external I2C EEPROM drivers) is left out: the MC5S3DP-XHAT has no EEPROM chip,
+# settings are stored in internal flash (FLASH_ENABLE).
 SRC_DIRS = Src grbl spindle motors trinamic keypad laser odometer fans plugins \
-           embroidery bluetooth encoder eeprom plasma openpnp
+           embroidery bluetooth encoder plasma openpnp
 C_SOURCES = $(foreach d,$(SRC_DIRS),$(wildcard $(d)/*.c)) \
             $(filter-out %_template.c,$(wildcard Drivers/STM32F4xx_HAL_Driver/Src/*.c))
 OBJECTS = $(addprefix $(BUILDDIR)/,$(C_SOURCES:.c=.o) $(STARTUP:.s=.o))
