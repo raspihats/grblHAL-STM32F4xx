@@ -27,7 +27,7 @@ SIZE     = $(PREFIX)size
 
 CPU  = -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 # Board defaults, matching the original grbl-Mega-5X firmware (safety door input on DI_3).
-BOARD_DEFS ?= -DSAFETY_DOOR_ENABLE=1
+BOARD_DEFS ?= -DSAFETY_DOOR_ENABLE=1 -DCOOLANT_ENABLE=0
 DEFS = $(MCU_DEF) -DUSE_HAL_DRIVER -DOVERRIDE_MY_MACHINE -DBOARD_$(BOARD)= \
        -DN_AXIS=$(N_AXIS) -DUSB_SERIAL_CDC=0 $(BOARD_DEFS) $(EXTRA_DEFS)
 

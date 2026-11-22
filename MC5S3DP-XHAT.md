@@ -110,6 +110,12 @@ Board net names (from the original CubeMX project) are given in brackets.
 grblHAL supports max limit switches for X, Y and Z only, so `A_MAX` and `B_MAX` are mapped as
 general-purpose aux inputs.
 
+The X/Y/Z max inputs (`PB7`–`PB9`, J5) are **not enabled by default**: they are only compiled in with
+`-DMC5S3DP_MAX_LIMITS`. J5 has no GND pin, so with the internal pull-ups a switch there never reads as active. Worse,
+when max inputs exist, grblHAL homes in the positive direction (`$23` bit clear) on the max input, which would ignore
+the J4 switches and run the axis into its end stop. With the max inputs left out, homing in either direction uses the J4
+(min) switches.
+
 ### Inputs
 
 | Pin | Net | Function |
@@ -132,12 +138,14 @@ Every input uses a different pin number, so no two inputs share an EXTI interrup
 | PC9 | `DQ_2` | Spindle PWM (TIM3 channel 4; frequency set with `$33`, default 5 kHz) |
 | PC8 | `DQ_3` | Spindle enable |
 | PC7 | `DQ_4` | Spindle direction |
-| PA11 | `DQ_0` | Coolant flood (M8) |
-| PA8 | `DQ_1` | Coolant mist (M7) |
+| PA11 | `DQ_0` | Aux out (P0). Coolant flood (M8) only if built with coolant |
+| PA8 | `DQ_1` | Aux out (P1). Coolant mist (M7) only if built with coolant |
 | PC6 | `DQ_5` | Aux output |
 | PA12 | `ST_LED` | Aux output (status LED) |
 
-Aux outputs not claimed by the spindle or coolant can be switched with `M62`-`M65`.
+Aux outputs not claimed by the spindle or coolant can be switched with `M62`-`M65`. The Makefile builds with
+`-DCOOLANT_ENABLE=0`, so PA11/PA8 are free aux outputs P0/P1 (the pick-and-place valves, switched independently
+with `M64`/`M65`). Without that option they are coolant flood/mist, and `M9` switches both off together.
 
 ### Analog inputs
 
