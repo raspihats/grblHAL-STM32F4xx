@@ -88,12 +88,18 @@
 #define Y_LIMIT_PIN                 2
 #define Z_LIMIT_PORT                GPIOB
 #define Z_LIMIT_PIN                 3
+// The max limit inputs (J5) are off by default. J5 only has VS_OUT, no GND, so with the internal pull-ups a
+// switch there can never read as active. And if max inputs are defined, grblHAL homes in the positive
+// direction ($23 bit clear) on the *max* input, so homing would ignore the J4 switches and run into the end
+// stop. The machine homes positive on the J4 (min) switches, which needs these left undefined.
+#ifdef MC5S3DP_MAX_LIMITS
 #define X_LIMIT_PORT_MAX            GPIOB
 #define X_LIMIT_PIN_MAX             7
 #define Y_LIMIT_PORT_MAX            GPIOB
 #define Y_LIMIT_PIN_MAX             8
 #define Z_LIMIT_PORT_MAX            GPIOB
 #define Z_LIMIT_PIN_MAX             9
+#endif
 #define LIMIT_INMODE                GPIO_BITBAND
 
 // Define ganged axis or A axis step pulse and step direction output pins.
