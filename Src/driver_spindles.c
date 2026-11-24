@@ -71,8 +71,9 @@ inline static void spindle_off (spindle_ptrs_t *spindle)
     spindle->context.pwm->flags.enable_out = Off;
 }
 
-inline static void spindle_dir (bool ccw)
+inline static void spindle_dir (spindle_ptrs_t *spindle, bool ccw)
 {
+    UNUSED(spindle);
     UNUSED(ccw);
 }
 

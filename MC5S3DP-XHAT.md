@@ -136,16 +136,22 @@ Every input uses a different pin number, so no two inputs share an EXTI interrup
 | Pin | Net | Function |
 |---|---|---|
 | PC9 | `DQ_2` | Spindle PWM (TIM3 channel 4; frequency set with `$33`, default 5 kHz) |
-| PC8 | `DQ_3` | Spindle enable |
-| PC7 | `DQ_4` | Spindle direction |
-| PA11 | `DQ_0` | Aux out (P0). Coolant flood (M8) only if built with coolant |
-| PA8 | `DQ_1` | Aux out (P1). Coolant mist (M7) only if built with coolant |
-| PC6 | `DQ_5` | Aux output |
-| PA12 | `ST_LED` | Aux output (status LED) |
+| PA11 | `DQ_0` | Aux out P0. Coolant flood (M8) only if built with coolant |
+| PA8 | `DQ_1` | Aux out P1. Coolant mist (M7) only if built with coolant |
+| PC8 | `DQ_3` | Aux out P2 (OD3). Spindle enable only with `XHAT_SPINDLE_ENA_DIR=1` |
+| PC7 | `DQ_4` | Aux out P3 (OD4). Spindle direction only with `XHAT_SPINDLE_ENA_DIR=1` |
+| PC6 | `DQ_5` | Aux out P4 (OD5) |
+| PA12 | `ST_LED` | Aux out P5 (status LED) |
 
-Aux outputs not claimed by the spindle or coolant can be switched with `M62`-`M65`. The Makefile builds with
+Aux outputs not claimed by the spindle or coolant are switched with `M62`-`M65`; their port numbers P0, P1, ... follow
+the order of `AUXOUTPUTn` in the board map, which lists the valves first so they stay P0/P1. The Makefile builds with
 `-DCOOLANT_ENABLE=0`, so PA11/PA8 are free aux outputs P0/P1 (the pick-and-place valves, switched independently
 with `M64`/`M65`). Without that option they are coolant flood/mist, and `M9` switches both off together.
+
+OD3, OD4 and OD5 (J12) are identical outputs, so by default the spindle (the vacuum pump) is PWM only (`M3 S..` /
+`M5` switch only the PWM on DQ_2) and OD3/OD4 are aux outputs like OD5. Build with `-DXHAT_SPINDLE_ENA_DIR=1` to use
+them as spindle enable/direction instead (P numbers then: P0/P1 valves, P2 OD5, P3 ST_LED). The PWM-only spindle
+needed a fix in `Src/driver_spindles.c` (its `spindle_dir()` had a stale signature and didn't compile).
 
 ### Analog inputs
 
