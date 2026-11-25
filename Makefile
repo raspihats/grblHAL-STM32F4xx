@@ -50,7 +50,7 @@ LIBS    = -lm
 # settings are stored in internal flash (FLASH_ENABLE).
 SRC_DIRS = Src grbl spindle motors trinamic keypad laser odometer fans plugins \
            embroidery bluetooth encoder plasma openpnp
-C_SOURCES = $(foreach d,$(SRC_DIRS),$(wildcard $(d)/*.c)) \
+C_SOURCES = $(foreach d,$(SRC_DIRS),$(wildcard $(d)/*.c)) boards/mc5s3dp_xhat.c \
             $(filter-out %_template.c,$(wildcard Drivers/STM32F4xx_HAL_Driver/Src/*.c))
 OBJECTS = $(addprefix $(BUILDDIR)/,$(C_SOURCES:.c=.o) $(STARTUP:.s=.o))
 

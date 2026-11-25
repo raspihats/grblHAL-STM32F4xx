@@ -33,10 +33,10 @@
  *
  *  Inputs:  PB13 [DI_0] Reset/E-stop    PB14 [DI_1] Feed hold    PA15 [DI_2] Cycle start
  *           PC10 [DI_3] Safety door     PC11 [DI_4] Probe        PA5 [FAULT] Motor fault
- *  Outputs: PC9 [DQ_2] Spindle PWM (TIM3_CH4)   PA11 [DQ_0] Aux P0   PA8 [DQ_1] Aux P1
- *           PC8 [DQ_3] Aux P2   PC7 [DQ_4] Aux P3   PC6 [DQ_5] Aux P4   PA12 [ST_LED] Aux P5
- *           (DQ_3/DQ_4 are spindle enable/direction with XHAT_SPINDLE_ENA_DIR=1, DQ_0/DQ_1 coolant with
- *           COOLANT_ENABLE)
+ *  Outputs: PA11 [DQ_0] Aux P0   PA8 [DQ_1] Aux P1   PC9 [DQ_2] Aux P2   PC8 [DQ_3] Aux P3
+ *           PC7 [DQ_4] Aux P4   PC6 [DQ_5] Aux P5   PA12 [ST_LED] Aux P6
+ *           (no spindle by default; XHAT_SPINDLE=1/2 makes DQ_2 spindle PWM (TIM3_CH4), 2 also DQ_3/DQ_4
+ *           spindle enable/direction; DQ_0/DQ_1 are coolant with COOLANT_ENABLE)
  *  Analog:  PA0 [THERM_0], PA1 [THERM_1] (PA2 [THERM_2] unused: driver supports two analog inputs)
  *  Serial:  USART1, PA9 TX / PA10 RX
  *
@@ -53,6 +53,7 @@
 #endif
 
 #define BOARD_NAME "MC5S3DP-XHAT"
+#define HAS_BOARD_INIT              // boards/mc5s3dp_xhat.c: load outputs off on reset, E-stop, alarm, sleep
 #define BOARD_URL "https://github.com/raspihats/MC5S3DP-XHAT-GRBL-5X"
 
 #define SERIAL_PORT                 1       // GPIOA: TX = 9, RX = 10
@@ -130,46 +131,52 @@
 #define M4_LIMIT_PIN                6
 #endif
 
-// OD3, OD4 and OD5 (J12) are identical outputs, so by default all three are plain aux outputs and the spindle (the
-// vacuum pump) is PWM only, on DQ_2. Build with -DXHAT_SPINDLE_ENA_DIR=1 to use OD3/OD4 as spindle enable/direction.
-#ifndef XHAT_SPINDLE_ENA_DIR
-#define XHAT_SPINDLE_ENA_DIR        0
+// The vacuum pump (OD2) is on/off only, so by default there is no spindle and all of DQ_0..DQ_5 are plain aux
+// outputs whose M64/M65 port number equals the OD number. XHAT_SPINDLE selects a spindle instead:
+//   0 (default) no spindle; P0..P5 = OD0..OD5, P6 = ST_LED
+//   1           spindle PWM only on DQ_2 (M3 S../M5)
+//   2           spindle PWM on DQ_2, enable on DQ_3, direction on DQ_4
+#ifndef XHAT_SPINDLE
+#define XHAT_SPINDLE                0
 #endif
-#if !XHAT_SPINDLE_ENA_DIR && (DRIVER_SPINDLE_ENABLE & SPINDLE_PWM)
 #undef DRIVER_SPINDLE_ENABLE
+#if XHAT_SPINDLE == 2
+#define DRIVER_SPINDLE_ENABLE       (SPINDLE_ENA|SPINDLE_PWM|SPINDLE_DIR)
+#elif XHAT_SPINDLE == 1
 #define DRIVER_SPINDLE_ENABLE       SPINDLE_PWM
+#else
+#define DRIVER_SPINDLE_ENABLE       0
 #endif
 
 // Free aux outputs get M64/M65 port numbers P0, P1, ... in this order, skipping pins claimed by the spindle or
-// coolant. Keep the valves first so they stay P0/P1 whatever is claimed. Default build:
-// P0 DQ_0 (valve 1), P1 DQ_1 (valve 2), P2 DQ_3 (OD3), P3 DQ_4 (OD4), P4 DQ_5 (OD5), P5 ST_LED.
-#define AUXOUTPUT0_PORT             GPIOA // DQ_0, OD0 (coolant flood if COOLANT_ENABLE)
+// coolant (so with a spindle, the outputs after DQ_2 move down by one or three).
+#define AUXOUTPUT0_PORT             GPIOA // DQ_0, OD0, valve 1 (coolant flood if COOLANT_ENABLE)
 #define AUXOUTPUT0_PIN              11
-#define AUXOUTPUT1_PORT             GPIOA // DQ_1, OD1 (coolant mist if COOLANT_ENABLE)
+#define AUXOUTPUT1_PORT             GPIOA // DQ_1, OD1, valve 2 (coolant mist if COOLANT_ENABLE)
 #define AUXOUTPUT1_PIN              8
-#define AUXOUTPUT2_PORT             GPIOC // DQ_3, OD3 (spindle enable if XHAT_SPINDLE_ENA_DIR)
-#define AUXOUTPUT2_PIN              8
-#define AUXOUTPUT3_PORT             GPIOC // DQ_4, OD4 (spindle direction if XHAT_SPINDLE_ENA_DIR)
-#define AUXOUTPUT3_PIN              7
-#define AUXOUTPUT4_PORT             GPIOC // DQ_5, OD5
-#define AUXOUTPUT4_PIN              6
-#define AUXOUTPUT5_PORT             GPIOA // ST_LED
-#define AUXOUTPUT5_PIN              12
-#define AUXOUTPUT6_PORT             GPIOC // DQ_2, OD2: spindle PWM (TIM3_CH4)
-#define AUXOUTPUT6_PIN              9
+#define AUXOUTPUT2_PORT             GPIOC // DQ_2, OD2, vacuum pump (spindle PWM, TIM3_CH4, if XHAT_SPINDLE)
+#define AUXOUTPUT2_PIN              9
+#define AUXOUTPUT3_PORT             GPIOC // DQ_3, OD3 (spindle enable if XHAT_SPINDLE == 2)
+#define AUXOUTPUT3_PIN              8
+#define AUXOUTPUT4_PORT             GPIOC // DQ_4, OD4 (spindle direction if XHAT_SPINDLE == 2)
+#define AUXOUTPUT4_PIN              7
+#define AUXOUTPUT5_PORT             GPIOC // DQ_5, OD5
+#define AUXOUTPUT5_PIN              6
+#define AUXOUTPUT6_PORT             GPIOA // ST_LED
+#define AUXOUTPUT6_PIN              12
 
 // Define driver spindle pins
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_PWM
-#define SPINDLE_PWM_PORT            AUXOUTPUT6_PORT
-#define SPINDLE_PWM_PIN             AUXOUTPUT6_PIN
+#define SPINDLE_PWM_PORT            AUXOUTPUT2_PORT
+#define SPINDLE_PWM_PIN             AUXOUTPUT2_PIN
 #endif
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_ENA
-#define SPINDLE_ENABLE_PORT         AUXOUTPUT2_PORT
-#define SPINDLE_ENABLE_PIN          AUXOUTPUT2_PIN
+#define SPINDLE_ENABLE_PORT         AUXOUTPUT3_PORT
+#define SPINDLE_ENABLE_PIN          AUXOUTPUT3_PIN
 #endif
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_DIR
-#define SPINDLE_DIRECTION_PORT      AUXOUTPUT3_PORT
-#define SPINDLE_DIRECTION_PIN       AUXOUTPUT3_PIN
+#define SPINDLE_DIRECTION_PORT      AUXOUTPUT4_PORT
+#define SPINDLE_DIRECTION_PIN       AUXOUTPUT4_PIN
 #endif
 
 // Define flood and mist coolant enable output pins.

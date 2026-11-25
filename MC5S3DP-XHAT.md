@@ -135,23 +135,28 @@ Every input uses a different pin number, so no two inputs share an EXTI interrup
 
 | Pin | Net | Function |
 |---|---|---|
-| PC9 | `DQ_2` | Spindle PWM (TIM3 channel 4; frequency set with `$33`, default 5 kHz) |
-| PA11 | `DQ_0` | Aux out P0. Coolant flood (M8) only if built with coolant |
-| PA8 | `DQ_1` | Aux out P1. Coolant mist (M7) only if built with coolant |
-| PC8 | `DQ_3` | Aux out P2 (OD3). Spindle enable only with `XHAT_SPINDLE_ENA_DIR=1` |
-| PC7 | `DQ_4` | Aux out P3 (OD4). Spindle direction only with `XHAT_SPINDLE_ENA_DIR=1` |
-| PC6 | `DQ_5` | Aux out P4 (OD5) |
-| PA12 | `ST_LED` | Aux out P5 (status LED) |
+| PA11 | `DQ_0` | Aux out P0 (OD0). Coolant flood (M8) only if built with coolant |
+| PA8 | `DQ_1` | Aux out P1 (OD1). Coolant mist (M7) only if built with coolant |
+| PC9 | `DQ_2` | Aux out P2 (OD2). Spindle PWM (TIM3 channel 4) only with `XHAT_SPINDLE=1` or `2` |
+| PC8 | `DQ_3` | Aux out P3 (OD3). Spindle enable only with `XHAT_SPINDLE=2` |
+| PC7 | `DQ_4` | Aux out P4 (OD4). Spindle direction only with `XHAT_SPINDLE=2` |
+| PC6 | `DQ_5` | Aux out P5 (OD5) |
+| PA12 | `ST_LED` | Aux out P6 (status LED) |
 
 Aux outputs not claimed by the spindle or coolant are switched with `M62`-`M65`; their port numbers P0, P1, ... follow
-the order of `AUXOUTPUTn` in the board map, which lists the valves first so they stay P0/P1. The Makefile builds with
-`-DCOOLANT_ENABLE=0`, so PA11/PA8 are free aux outputs P0/P1 (the pick-and-place valves, switched independently
-with `M64`/`M65`). Without that option they are coolant flood/mist, and `M9` switches both off together.
+the order of `AUXOUTPUTn` in the board map. On the pick-and-place machine the vacuum pump (OD2) is on/off only, so by
+default (`XHAT_SPINDLE=0`) there is no spindle and every output's P number equals its OD number: valves `M64`/`M65`
+P0 and P1, pump P2. The Makefile builds with `-DCOOLANT_ENABLE=0`, so PA11/PA8 are not coolant outputs (with coolant,
+`M9` would switch both valves off together).
 
-OD3, OD4 and OD5 (J12) are identical outputs, so by default the spindle (the vacuum pump) is PWM only (`M3 S..` /
-`M5` switch only the PWM on DQ_2) and OD3/OD4 are aux outputs like OD5. Build with `-DXHAT_SPINDLE_ENA_DIR=1` to use
-them as spindle enable/direction instead (P numbers then: P0/P1 valves, P2 OD5, P3 ST_LED). The PWM-only spindle
-needed a fix in `Src/driver_spindles.c` (its `spindle_dir()` had a stale signature and didn't compile).
+`XHAT_SPINDLE=1` makes DQ_2 a PWM-only spindle (`M3 S..` / `M5`), `XHAT_SPINDLE=2` adds enable/direction on DQ_3/DQ_4;
+the outputs after a claimed pin then move down to lower P numbers. The PWM-only spindle needed a fix in
+`Src/driver_spindles.c` (its `spindle_dir()` had a stale signature and didn't compile).
+
+grblHAL leaves aux outputs as they are on a soft reset, E-stop, alarm and sleep, while it switches a spindle and
+coolant off. `boards/mc5s3dp_xhat.c` (`board_init`, enabled with `HAS_BOARD_INIT` in the map and listed in the
+Makefile) switches the unclaimed DQ_0..DQ_5 outputs off on reset and when the machine enters alarm, E-stop or sleep, so
+the pump and valves behave as safely as they did as spindle and coolant.
 
 ### Analog inputs
 
